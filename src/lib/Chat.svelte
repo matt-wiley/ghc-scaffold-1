@@ -1,5 +1,7 @@
 <script lang="ts">
     import { onMount, afterUpdate, onDestroy } from "svelte";
+    import { markdownResponses, loadMarkdown } from '../stores/markdownStore';
+    import { get } from 'svelte/store';
     import { marked } from "marked";
     import DOMPurify from "dompurify";
     import hljs from 'highlight.js/lib/core';
@@ -29,7 +31,8 @@
     import markdown from 'highlight.js/lib/languages/markdown';
     import plaintext from 'highlight.js/lib/languages/plaintext';
 
-
+    const markdownFilesToLoad = ['markdown/webm2gif.md'];
+    $: mdResponses = $markdownResponses;
 
     let messages: any[] = [];
     let inputValue = "";
@@ -46,7 +49,7 @@
 
     function renderBotMessage(content: string) {
         const renderer = new marked.Renderer();
-        renderer.code = (code, language) => {
+        renderer.code = (code: any, language: any) => {
             let lang = language || 'plaintext';
             if (typeof code === 'object' && code.lang) {
                 lang = code.lang;
@@ -96,9 +99,10 @@
     }
 
     function simulateBotResponse() {
-        const responses = [
-            "Here's an example of Python code:\n\n```python\ndef fibonacci(n):\n    a, b = 0, 1\n    for _ in range(n):\n        yield a\n        a, b = b, a + b\n\nfor num in fibonacci(10):\n    print(num)\n```\n\nAnd here's some JavaScript:\n\n```javascript\nconst fibonacci = function* (n) {\n    let [a, b] = [0, 1];\n    for (let i = 0; i < n; i++) {\n        yield a;\n        [a, b] = [b, a + b];\n    }\n};\n\nfor (const num of fibonacci(10)) {\n    console.log(num);\n}\n```",
-        ];
+
+        // Set responses to the content of the markdown files
+        const responses = mdResponses
+        
         const response = responses[Math.floor(Math.random() * responses.length)];
         const words = response.split(" ");
 
@@ -174,6 +178,9 @@
         if (chatContainer) {
             chatContainer.addEventListener('scroll', checkNearBottom);
         }
+
+        // Load the markdown files when the component mounts
+        markdownFilesToLoad.forEach(loadMarkdown);
     });
 
     afterUpdate(() => {
